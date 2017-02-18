@@ -1,0 +1,92 @@
+#!/bin/bash
+
+#permitir el acceso a usuarios no root
+SCRIPT_UMASK=0077
+umask $SCRIPT_UMASK
+
+
+
+
+show_info() {
+echo -e "\033[1;34m$@\033[0m"
+}
+
+Desempaquetar() {
+show_info "Desempaquetando..."
+rm -r codigo_fuente
+dpkg-source -x *.dsc  codigo_fuente
+}
+
+Commit() {
+show_info "Crear parches al código fuente.."
+dpkg-source --commit  codigo_fuente
+}
+
+Empaquetar() {
+show_info "Incorporar patches al codigo fuente..."
+dpkg-source -b  codigo_fuente
+show_info "Entre contraseña ahora..."
+Deb
+}
+
+Deb() {
+show_info "Construyendo paquete debian..."
+sudo pbuilder build *.dsc
+
+mkdir debian-package
+cp /var/cache/pbuilder/result/*.deb ./debian-package
+chmod -R 775 debian-package
+clear
+show_info "Instale el .deb en debian-package..."
+
+}
+Instalar() {
+show_info "Instalando paquete debian..."
+cd debian-package
+sudo dpkg -i *.deb
+cd ..
+clear
+show_info "Paquete debian Listo..."
+
+}
+Desintalar() {
+show_info "Desintalando paquete debian..."
+cd debian-package
+
+pname=$(dpkg --info *.deb | grep Package | cut -d":" -f2 )
+
+sudo dpkg -r $pname
+
+cd ..
+
+nautilus -q
+clear
+show_info "Paquete debian Desintalado..."
+}
+
+	
+case "$1" in
+	ext)
+	    Desempaquetar;;
+	
+	act)
+		Commit;;
+		
+	build)
+		Empaquetar;;
+		
+    inst)
+		Instalar;;
+		
+	desint)
+		Desintalar;;
+
+		*)
+	       show_info "Uso:   sudo  bash code [argumentos]   "
+               show_info "extraer  ext"
+               show_info "actualizar act"
+               show_info "build  build"
+               show_info "instalar inst"
+               show_info "desintalar  desint"
+	     exit;;
+esac
